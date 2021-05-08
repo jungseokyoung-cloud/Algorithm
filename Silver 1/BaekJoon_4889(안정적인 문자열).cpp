@@ -34,7 +34,7 @@ int main()
         char c;
         if(!s.empty()) // 비어 있지 않다면 연산이 필요한 경우이다.
         {
-            while(!st.empty()) //size/2만큼 진행
+            while(!st.empty())
             {
                 c=st.top();
                 st.pop();
