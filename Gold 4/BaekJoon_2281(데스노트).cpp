@@ -22,4 +22,11 @@ int main(){
     for(int i=0; i<N; i++) cin>>death_name[i];
     memset(deathNote, -1, sizeof(deathNote));
     cout<<Solve(1, death_name[0] +1)<<'\n';
-}
+}b
+
+
+
+
+
+ *0***0000. solve(2,6)
+ 0000000000
