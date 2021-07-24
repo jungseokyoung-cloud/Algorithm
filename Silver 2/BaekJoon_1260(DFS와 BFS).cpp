@@ -1,54 +1,68 @@
 #include<bits/stdc++.h>
 using namespace std;
 #define FAST ios::sync_with_stdio(0),cin.tie(0),cout.tie(0)
-vector<int>connect[1001];
+
+int N,M,V;
+vector<int> graph[1001];
 bool vis[1001];
-void DFS(int start)
-{
-    vis[start]=true;
-    cout<<start<<' ';
-    for(int i=0; i<connect[start].size(); i++)
-    {
-        int nx=connect[start][i];
-        if(vis[nx])continue;
-        DFS(nx);
+vector<int> ansBFS, ansDFS;
+
+void DFS(int node){
+    if(vis[node]) return;
+    
+    vis[node] = true;
+    ansDFS.push_back(node);
+    
+    for(int i = 0; i<graph[node].size(); i++){
+        int next = graph[node][i];
+        DFS(next);
     }
 }
-void BFS(int start)
-{
-    queue<int> pos;
-    pos.push(start);
-    vis[start]=true;
-    while(!pos.empty())
-    {
-        int x=pos.front();
-        pos.pop();
-        cout<<x<<' ';
-        for(int i=0; i<connect[x].size(); i++)
-        {
-            int nx=connect[x][i];
-            if(vis[nx])continue;
-            pos.push(nx);
-            vis[nx]=true;
+
+void BFS(){
+    queue<int> node;
+    node.push(V);
+    vis[V] = true;
+    
+    while(!node.empty()){
+        int now = node.front();
+        node.pop();
+        ansBFS.push_back(now);
+        
+        for(int i = 0; i<graph[now].size(); i++){
+            int next = graph[now][i];
+            
+            if(vis[next]) continue;
+            
+            vis[next] = true;
+            node.push(next);
         }
     }
+}
+
+void Solve(){
+    for(int i = 1; i<=N; i++) sort(graph[i].begin(), graph[i].end());
+    DFS(V);
+    memset(vis, false, sizeof(vis));
+    BFS();
+}
+
+void Print(){
+    for(auto res : ansDFS) cout<<res<<' ';
+    cout<<'\n';
+    for(auto res : ansBFS) cout<<res<<' ';
     cout<<'\n';
 }
-int main()
-{
+
+int main(){
     FAST;
-    int N,M,start,u,v;
-    cin>>N>>M>>start;
-    for (int i=0; i<M; i++)
-    {
-        cin>>u>>v;
-        connect[u].push_back(v);
-        connect[v].push_back(u);
+    cin>>N>>M>>V;
+    int node1,node2;
+    while(M--){
+        cin>>node1>>node2;
+        graph[node1].push_back(node2);
+        graph[node2].push_back(node1);
     }
-    for(int i=0; i<N; i++)
-        sort(connect[i].begin(), connect[i].end());
-    DFS(start);
-    cout<<'\n';
-    memset(vis, false, sizeof(vis));
-    BFS(start);
+    Solve();
+    Print();
 }
