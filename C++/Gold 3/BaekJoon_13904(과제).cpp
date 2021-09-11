@@ -2,21 +2,21 @@
 using namespace std;
 #define FAST ios::sync_with_stdio(0),cin.tie(0),cout.tie(0)
 #define endl '\n'
+int N, ans;
+pair<int, int> assign[1000];
 int dp[1001][1001];
-pair<int, int> assign[1001];
-int N,ans;
 
 void Solve(){
-    sort(assign, assign + N + 1);
-    for(int i = 1; i<=N; i++){
-        int deadline = assign[i].first;
-        int value = assign[i].second;
-        for(int j = 1; j<=N; j++){
-            dp[i][j] = max(dp[i-1][j], dp[i][j-1]);
-            if(j > deadline) continue;
-            
-            dp[i][j] = max(dp[i][j], dp[i-1][j-1] + value);
-            ans = max(dp[i][j], ans);
+    sort(assign, assign+N);
+    
+    for(int i = 0; i<N; i++){
+        int day = assign[i].first;
+        int cost = assign[i].second;
+        
+        for(int j = 1; j<=day; j++){
+            if(i == 0) dp[i][j] = cost;
+            else  dp[i][j] = max(dp[i-1][j], dp[i-1][j-1] + cost);
+            ans = max(ans, dp[i][j]);
         }
     }
 }
@@ -24,7 +24,9 @@ void Solve(){
 int main(){
     FAST;
     cin>>N;
-    for(int i = 1; i<=N; i++) cin>>assign[i].first>>assign[i].second;
+    for(int i = 0; i<N; i++){
+        cin>>assign[i].first>>assign[i].second;
+    }
     Solve();
     cout<<ans<<endl;
 }
