@@ -2,52 +2,51 @@
 using namespace std;
 #define FAST ios::sync_with_stdio(0),cin.tie(0),cout.tie(0)
 #define endl '\n'
-int invest[301][21];
-int path[301][21];
-int dp[301][21];
 int N,M;
+int invest[301][21];
+int dp[301][21];
+int trace[301][21];
 
 void Input(){
-    memset(dp, -1, sizeof(dp));
     cin>>N>>M;
-    for(int i = 1; i<=N; i++){
-        int value;
-        cin>>value;
+    memset(dp, -1, sizeof(dp));
+    for(int i = 0; i<N; i++){
+        int money;
+        cin>>money;
         for(int j = 1; j<=M; j++){
-            cin>>invest[i][j];
+            cin>>invest[money][j];
         }
     }
 }
 
-int Solve(int value, int now){
-    int &ref = dp[value][now];
+int DP(int idx, int value){
+    if(idx > M) return 0;
     
-    if(now == M+1 || value == 0) return 0;
+    int &ref = dp[value][idx];
+    
     if(ref != -1) return ref;
-    
-    for(int i = 0; i<=value; i++){
-        int temp = Solve(value-i, now + 1) + invest[i][now];
         
-        if(temp > ref) {
-            ref = temp;
-            path[value][now] = value-i;
+    for(int i = 0; i<=value; i++){
+        int comp = DP(idx+1, value - i) + invest[i][idx];
+        
+        if(ref < comp){
+            ref = comp;
+            trace[value][idx] = i;
         }
     }
     return ref;
 }
 
-void Print(int value, int now){
-    if(now == M + 1) return;
-    
-    int cost = value - path[value][now];
-    cout<<cost<<' ';
-    Print(path[value][now], now+1);
+void PrintPath(int now, int value){
+    if(now > M) return;
+    cout<<trace[value][now]<<' ';
+    PrintPath(now+1, value - trace[value][now]);
 }
 
 int main(){
     FAST;
     Input();
-    cout<<Solve(N, 1)<<endl;
-    Print(N, 1);
+    cout<<DP(1, N)<<endl;
+    PrintPath(1,N);
     cout<<endl;
 }

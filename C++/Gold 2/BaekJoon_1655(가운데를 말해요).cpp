@@ -4,26 +4,28 @@ using namespace std;
 #define endl '\n'
 int N;
 int arr[100000];
-vector<int> ans;
 
 void Solve(){
-    priority_queue<int> maxHeap, minHeap;
+    priority_queue<int> upper; // 작은 애들 저장
+    priority_queue<int> lower; // 큰 애들 저장
+    
     for(int i = 0; i<N; i++){
-        if(maxHeap.size() > minHeap.size()) minHeap.push(-arr[i]);
-        else maxHeap.push(arr[i]);
+        if(upper.size() == lower.size()) upper.push(arr[i]);
+        else lower.push(-arr[i]);
         
-        if(minHeap.size() != 0 && maxHeap.top() > -minHeap.top()){
-            int temp1 = maxHeap.top();
-            int temp2 = -minHeap.top();
-            
-            maxHeap.pop();
-            minHeap.pop();
-            
-            maxHeap.push(temp2);
-            minHeap.push(-temp1);
+        if(!lower.empty() && !upper.empty()){
+            int upperTop = upper.top();
+            int lowerTop = -lower.top();
+            if(upperTop > lowerTop){
+                upper.pop();
+                lower.pop();
+                upper.push(lowerTop);
+                lower.push(-upperTop);
+            }
         }
-        ans.push_back(maxHeap.top());
+        cout<<upper.top()<<endl;
     }
+
 }
 
 int main(){
@@ -31,5 +33,4 @@ int main(){
     cin>>N;
     for(int i = 0; i<N; i++) cin>>arr[i];
     Solve();
-    for(auto res : ans) cout<<res<<endl;
 }
