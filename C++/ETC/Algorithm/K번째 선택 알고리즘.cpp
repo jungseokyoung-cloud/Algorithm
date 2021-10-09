@@ -5,7 +5,7 @@ using namespace std;
 int arr[] = {8,3,11,9,12,2,6,15,18,10,7,4};
 int K;
 
-int Find_Pivot(int st, int en){
+int getPivot(int st, int en){
     int mid = (st + en)/2;
     if(st == mid) return st;
     if(arr[st] <= arr[mid]){
@@ -18,42 +18,39 @@ int Find_Pivot(int st, int en){
     else return en;
 }
 
-int Sort(int st, int en){
-    int pivotIdx = Find_Pivot(st, en);
-    int lft = st+1;
+int Quick(int st, int en){
+    int pivotIdx = getPivot(st, en);
+    int lft = st + 1;
     int rft = en;
     int pivot = arr[pivotIdx];
-    swap(arr[st], arr[pivotIdx]);
     
+    swap(arr[st], arr[pivotIdx]);
+
     while(lft <= rft){
         while(lft <= en && arr[lft] < pivot) lft++;
-        while(st <= rft && arr[rft] > pivot) rft--;
-        
+        while(rft >= st && arr[rft] > pivot) rft--;
+
         if(lft < rft) swap(arr[lft], arr[rft]);
     }
-    swap(arr[rft], arr[st]);
     
-    
-    for(int i = 0; i<12; i++) cout<<arr[i]<<' ';
-    cout<<endl;
+    swap(arr[st], arr[rft]);
     return rft;
 }
 
-int quick_sort(int st, int en, int k){
-    if(st > en) return -1;
-    else if(st == en) return arr[st];
-    
-    int pivotIdx = Sort(st, en);
 
-    if(pivotIdx + 1 == k) return arr[pivotIdx];
-    else if(pivotIdx + 1 > K) return quick_sort(st, pivotIdx-1, k);
-    else return quick_sort(pivotIdx+1, en, k);
-        
-    return -1;
+
+int Selection(int st, int en, int k){
+    if(st == en) return arr[st];
+    int pivotIdx = Quick(st, en);
+    int lftSize = pivotIdx - st;
+
+    if(lftSize + 1 == k) return arr[pivotIdx];
+    else if(lftSize + 1 > k) return Selection(st, pivotIdx-1, k);
+    else return Selection(pivotIdx + 1, en, k-lftSize -1);
 }
 
 int main(){
     FAST;
     cin>>K;
-    cout<<quick_sort(0, 11, K)<<endl;;
+    cout<<Selection(0, 11, K)<<endl;
 }
