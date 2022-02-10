@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define FAST ios::sync_with_stdio(0),cin.tie(0),cout.tie(0)
+#define endl '\n'
+int N,M, ans;
+bool isFind;
+bool vis[10000][500];
+char board[10000][500];
+int dis_x[] = {-1,0,1};
+int dis_y[] = {1,1,1};;
+
+void input() {
+    cin>>N>>M;
+    for(int i = 0; i<N; i++){
+        for(int j = 0; j<M; j++){
+            cin>>board[i][j];
+        }
+    }
+}
+
+void DFS(int x, int y) {
+    if(isFind) return;
+    
+    vis[x][y] = true;
+    
+    if(y == M - 1){
+        ans ++;
+        isFind = true;
+    }
+    
+    for(int i = 0; i<3; i++){
+        int nx = x + dis_x[i];
+        int ny = y + dis_y[i];
+        
+        if(nx < 0 || nx >= N || ny < 0 || ny >= M) continue;
+        if(vis[nx][ny] || board[nx][ny] == 'x') continue;
+
+        DFS(nx, ny);
+    }
+}
+
+void solve() {
+    for(int i = 0; i<N; i++){
+        isFind = false;
+        DFS(i,0);
+    }
+}
+
+int main(){
+    FAST;
+    input();
+    solve();
+    cout<<ans<<endl;
+}
