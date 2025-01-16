@@ -1,10 +1,3 @@
-//
-//  BOJ_1781(컵라면).swift
-//  BOJ
-//
-//  Created by jung on 1/6/25.
-//
-
 struct Heap<T: Comparable> {
   enum HeapType {
     case min
@@ -122,49 +115,79 @@ struct PriorityQueue<T: Comparable> {
   }
 }
 
-func solution() {
-  let n = readInt()
-  var problems = [Problem]()
+struct QueueItem {
+  let node: Int
+  let k: Int
+  let cost: Int
   
-  (0..<n).forEach { _ in
-    let (deadLine, score) = readPairIntegers()
-    problems.append(.init(deadLine, score))
+  init(_ node: Int, _ k: Int, _ cost: Int) {
+    self.node = node
+    self.k = k
+    self.cost = cost
   }
-  problems.sort {
-    ($0.deadLine == $1.deadLine) ? $0.score > $1.score : $0.deadLine < $1.deadLine
-  }
+}
 
-  let result = maxScore(problems: problems)
+extension QueueItem: Comparable {
+  static func < (lhs: QueueItem, rhs: QueueItem) -> Bool {
+    return lhs.cost < rhs.cost
+  }
+}
+
+func solution() {
+  let (cityCount, roadCount, k) = readTupleIntegers()
+  
+  let roads = configureRoads(cityCount: cityCount, roadCount: roadCount)
+  let result = dijkstra(roads: roads, k: k)
   print(result)
 }
 
-func maxScore(problems: [Problem]) -> Int {
-  var queue = PriorityQueue<Problem>(type: .min)
-  var result = 0
+func configureRoads(cityCount: Int, roadCount: Int) -> [[(Int, Int)]] {
+  var graph = Array(repeating: [(Int, Int)](), count: cityCount)
   
-  problems.forEach { problem in
-    if queue.count < problem.deadLine {
-      queue.enqueue(problem)
-    } else if let front = queue.front, front.score < problem.score, queue.count == problem.deadLine {
-      queue.dequeue()
-      queue.enqueue(problem)
+  (0..<roadCount).forEach { _ in
+    let (city1, city2, weight) = readTupleIntegers()
+    graph[city1 - 1].append((city2 - 1, weight))
+    graph[city2 - 1].append((city1 - 1, weight))
+  }
+  
+  return graph
+}
+
+func readTupleIntegers() -> (Int, Int, Int) {
+  let inputs = readLine()!.split(separator: " ").map { Int($0)! }
+  
+  return (inputs[0], inputs[1], inputs[2])
+}
+
+func dijkstra(roads: [[(Int, Int)]], k: Int) -> Int {
+  var queue = PriorityQueue<QueueItem>(type: .min)
+  var costs = Array(
+    repeating: Array(repeating: Int.max, count: k + 1),
+    count: roads.count
+  )
+  costs[0][k] = 0
+  queue.enqueue(.init(0, k, 0))
+  
+  while let front = queue.dequeue() {
+    guard costs[front.node][front.k] >= front.cost else { continue }
+
+    roads[front.node].forEach { (toCity, weight) in
+      let nextCost = front.cost + weight
+      
+      // 지우지 않는 방식
+      if costs[toCity][front.k] > nextCost {
+        costs[toCity][front.k] = nextCost
+        queue.enqueue(.init(toCity, front.k, nextCost))
+      }
+      
+      if front.k != 0 && costs[toCity][front.k - 1] > front.cost {
+        costs[toCity][front.k - 1] = front.cost
+        queue.enqueue(.init(toCity, front.k - 1, front.cost))
+      }
     }
   }
   
-  while let front = queue.dequeue() {
-    result += front.score
-  }
-  return result
-}
-
-func readInt() -> Int {
-  return Int(readLine()!)!
-}
-
-func readPairIntegers() -> (Int, Int) {
-  let inputs = readLine()!.split(separator: " ").map { Int($0)! }
-  
-  return (inputs[0], inputs[1])
+  return costs[roads.count - 1].min() ?? 0
 }
 
 solution()
