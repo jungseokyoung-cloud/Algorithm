@@ -1,32 +1,57 @@
-//
-//  BOJ_1781(컵라면).swift
-//  BOJ
-//
-//  Created by jung on 1/6/25.
-//
+import Foundation
 
+class FileIO {
+  @inline(__always) private var buffer: [UInt8] = Array(FileHandle.standardInput.readDataToEndOfFile()) + [0], byteIdx = 0
+  
+  @inline(__always) private func readByte() -> UInt8 {
+    defer { byteIdx += 1 }
+    return buffer.withUnsafeBufferPointer { $0[byteIdx] }
+  }
+  
+  @inline(__always) func readInt() -> Int {
+    var number = 0, byte = readByte(), isNegative = false
+    while byte == 10 || byte == 32 { byte = readByte() }
+    if byte == 45 { byte = readByte(); isNegative = true }
+    while 48...57 ~= byte { number = number * 10 + Int(byte - 48); byte = readByte() }
+    return number * (isNegative ? -1 : 1)
+  }
+  
+  @inline(__always) func readStirngSum() -> Int {
+    var byte = readByte()
+    while byte == 10 || byte == 32 { byte = readByte() }
+    var sum = Int(byte)
+    while byte != 10 && byte != 32 && byte != 0 { byte = readByte(); sum += Int(byte) }
+    return sum - Int(byte)
+  }
+  
+  @inline(__always) private func write(_ output: String) {
+    FileHandle.standardOutput.write(output.data(using: .utf8)!)
+  }
+}
+
+// MARK: - Heap
 struct Heap<T: Comparable> {
   enum HeapType {
-    case min
     case max
+    case min
   }
-  private var elements = [T]()
-  private var compare: (T, T) -> Bool
-  
+
+  private(set) var elements: [T] = []
+  private let compare: (T, T) -> Bool
+
   let type: HeapType
-  
+  var top: T? { elements.first }
   var isEmpty: Bool { elements.isEmpty }
   var count: Int { elements.count }
-  var peek: T? { elements.first }
-  
+
   init(type: HeapType) {
     self.type = type
-    
+
     switch type {
-      case .min:
-        self.compare = { $0 < $1 }
       case .max:
         self.compare = { $0 > $1 }
+      case .min:
+        self.compare = { $0 < $1 }
     }
   }
 }
@@ -35,136 +60,134 @@ struct Heap<T: Comparable> {
 extension Heap {
   mutating func push(_ element: T) {
     elements.append(element)
-    shiftUp(lastIndex: elements.count - 1)
+    shiftUp(index: count - 1)
   }
-  
+
+  @discardableResult
   mutating func pop() -> T? {
     guard !isEmpty else { return nil }
-    
-    defer {
-      elements.swapAt(0, elements.count - 1)
-      elements.removeLast()
-      shiftDown()
-    }
-    
-    return elements[0]
+
+    let element = elements.first
+
+    elements.swapAt(0, count - 1)
+    elements.removeLast()
+    shiftDown()
+
+    return element
   }
 }
 
-// MARK: - Private Heap Methods
+// MARK: - Heap Private Methods
 private extension Heap {
-  mutating func shiftUp(lastIndex: Int) {
-    var current = lastIndex
+  mutating func shiftUp(index: Int) {
+    var current = index
     var parent = parentIndex(for: current)
-    
+
     while current > 0 && compare(elements[current], elements[parent]) {
-      
       elements.swapAt(current, parent)
+
       current = parent
       parent = parentIndex(for: current)
     }
   }
-  
+
   mutating func shiftDown() {
     var current = 0
-    
+
     while true {
-      let (leftChild, rightChild) = childIndexs(for: current)
+      let (left, right) = childIndexs(for: current)
       var candidate = current
-      
-      if
-        leftChild < count,
-        compare(elements[leftChild], elements[candidate]) {
-        candidate = leftChild
+
+      if left < count && compare(elements[left], elements[current]) {
+        candidate = left
       }
-      
-      if
-        rightChild < count,
-        compare(elements[rightChild], elements[candidate]),
-        compare(elements[rightChild], elements[leftChild]) {
-        candidate = rightChild
+
+      if right < count && compare(elements[right], elements[current]) && compare(elements[right], elements[left]) {
+        candidate = right
       }
-      
-      guard candidate != current else { break }
-      elements.swapAt(candidate, current)
+
+      if candidate == current { break }
+
+      elements.swapAt(current, candidate)
       current = candidate
     }
   }
-  
-  
+
   func parentIndex(for index: Int) -> Int {
     return (index - 1) / 2
   }
-  
+
   func childIndexs(for index: Int) -> (leftChild: Int, rightChild: Int) {
-    return (2 * index + 1, 2 * index + 2)
+    let leftIndex = leftChildIndex(for: index)
+    let rightIndex = rightChildIndex(for: index)
+    return (leftChild: leftIndex, rightChild: rightIndex)
+  }
+
+  func leftChildIndex(for index: Int) -> Int {
+    return 2 * index + 1
+  }
+
+  func rightChildIndex(for index: Int) -> Int {
+    return 2 * index + 2
   }
 }
 
-struct PriorityQueue<T: Comparable> {
-  private var heap: Heap<T>
+struct Problem: Comparable {
+  let deadLine: Int
+  let score: Int
   
-  var isEmpty: Bool { heap.isEmpty }
-  var count: Int { heap.count }
-  var front: T? { heap.peek }
-  
-  init(type: Heap<T>.HeapType) {
-    self.heap = Heap(type: type)
-  }
-  
-  mutating func enqueue(_ element: T) {
-    heap.push(element)
-  }
-  
-  @discardableResult
-  mutating func dequeue() -> T? {
-    return heap.pop()
+  static func < (lhs: Problem, rhs: Problem) -> Bool {
+    return lhs.deadLine == rhs.deadLine ? lhs.score > rhs.score : lhs.deadLine < rhs.deadLine
   }
 }
+
+fileprivate let fileIO = FileIO()
 
 func solution() {
-  let n = readInt()
-  var problems = [Problem]()
-  
-  (0..<n).forEach { _ in
-    let (deadLine, score) = readPairIntegers()
-    problems.append(.init(deadLine, score))
-  }
-  problems.sort {
-    ($0.deadLine == $1.deadLine) ? $0.score > $1.score : $0.deadLine < $1.deadLine
-  }
-
-  let result = maxScore(problems: problems)
+  let n = readInteger()
+  let problems = configureProblems(n)
+  let result = maxScore(for: problems)
   print(result)
 }
 
-func maxScore(problems: [Problem]) -> Int {
-  var queue = PriorityQueue<Problem>(type: .min)
+func readInteger() -> Int {
+  return fileIO.readInt()
+}
+
+func configureProblems(_ n: Int) -> [Problem] {
+  var problems = [Problem]()
+  
+  (0..<n).forEach { _ in
+    let num1 = fileIO.readInt()
+    let num2 = fileIO.readInt()
+    
+    problems.append(.init(deadLine: num1, score: num2))
+  }
+  
+  return problems
+}
+
+func maxScore(for problems: [Problem]) -> Int {
+  var heap = Heap<Int>(type: .min)
   var result = 0
+  var currentTime = 0
+  let sortedProblem = problems.sorted(by: <)
   
-  problems.forEach { problem in
-    if queue.count < problem.deadLine {
-      queue.enqueue(problem)
-    } else if let front = queue.front, front.score < problem.score, queue.count == problem.deadLine {
-      queue.dequeue()
-      queue.enqueue(problem)
+  for problem in sortedProblem {
+    guard currentTime >= problem.deadLine else {
+      heap.push(problem.score)
+      result += problem.score
+      currentTime += 1
+      continue
     }
+    
+    guard let top = heap.top, top < problem.score else { continue }
+    heap.pop()
+    result += (problem.score - top)
+    heap.push(problem.score)
   }
   
-  while let front = queue.dequeue() {
-    result += front.score
-  }
   return result
-}
-
-func readInt() -> Int {
-  return Int(readLine()!)!
-}
-
-func readPairIntegers() -> (Int, Int) {
-  let inputs = readLine()!.split(separator: " ").map { Int($0)! }
-  
-  return (inputs[0], inputs[1])
 }
 
 solution()
