@@ -102,74 +102,64 @@ private extension Heap {
 }
 
 func solution() {
-  let hp = readInterger()
-  let (_, extraCardCount) = readPairInterger()
-  let cardPowers = readIntergers()
-  let extraCardPowers = configureExtraCardPower(extraCardCount)
+  let hp = readInteger()
+  let (_, count) = readPairIntegers()
+  let initalCards = readIntegers()
+  let extraCards = readExtraCards(count: count)
   
-  let result = minumunCardCounts(hp, cardPowers, extraCardPowers)
-  print(result.map{ String($0) }.joined(separator: "\n"))
+  let results = playGame(hp: hp, cards: initalCards, extraCards: extraCards)
+  print(results.map { String($0) }.joined(separator: "\n"))
 }
 
-func configureExtraCardPower(_ extraCardCount: Int) -> [Int] {
-  var extraCardPowers: [Int] = []
-  
-  for _ in 0..<extraCardCount {
-    extraCardPowers.append(readInterger())
+func readExtraCards(count: Int) -> [Int] {
+  var cards = [Int]()
+  for _ in 0..<count {
+    cards.append(readInteger())
   }
   
-  return extraCardPowers
+  return cards
 }
 
-func readInterger() -> Int {
-  Int(readLine()!)!
+func readInteger() -> Int {
+  return Int(readLine()!)!
 }
 
-func readPairInterger() -> (Int, Int) {
-  let inputs = readIntergers()
+func readPairIntegers() -> (Int, Int) {
+  let input = readIntegers()
   
-  return (inputs[0], inputs[1])
+  return (input[0], input[1])
 }
 
-func readIntergers() -> [Int] {
+func readIntegers() -> [Int] {
   return readLine()!.split(separator: " ").map { Int($0)! }
 }
 
-func minumunCardCounts(_ hp: Int, _ cardPowers: [Int], _ extraCardPowers: [Int]) -> [Int] {
-  var results = [Int]()
-  var currentCards = Heap<Int>(type: .min)
-  let sortedPowers = cardPowers.sorted(by: >)
-  var currentTotal = 0
+func playGame(hp: Int, cards: [Int], extraCards: [Int]) -> [Int] {
+  let sortedCards = cards.sorted(by: >)
   
-  for power in sortedPowers {
+  var results = [Int]()
+  var currentTotal = 0
+  var heap = Heap<Int>(type: .min)
+  
+  // inital Setting
+  for card in sortedCards {
     guard currentTotal < hp else { break }
-    
-    currentTotal += power
-    currentCards.push(power)
+    heap.push(card)
+    currentTotal += card
   }
   
-  let result = currentTotal < hp ? -1 : currentCards.count
-  results.append(result)
+  results.append(currentTotal >= hp ? heap.count : -1)
+  
+  // extra Cards
+  for card in extraCards {
+    defer { results.append(currentTotal >= hp ? heap.count : -1) }
+    heap.push(card)
+    currentTotal += card
+    guard currentTotal >= hp else { continue }
 
-  for extraPower in extraCardPowers {
-    if currentTotal < hp {
-      currentTotal += extraPower
-      currentCards.push(extraPower)
-    } else if (currentCards.top ?? 0) < extraPower {
-      currentTotal += extraPower
-      
-      while let top = currentCards.top {
-        if currentTotal - top < hp { break }
-        currentTotal -= top
-        currentCards.pop()
-      }
-
-      currentCards.push(extraPower)
+    while let top = heap.top, currentTotal - top >= hp {
+      heap.pop()
     }
-
-
-    let result = currentTotal < hp ? -1 : currentCards.count
-    results.append(result)
   }
   
   return results
